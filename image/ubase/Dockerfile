@@ -95,15 +95,15 @@ COPY --chown=0:0 entrypoint.sh /
 COPY --chown=0:0 .stow-local-ignore /home/tooling/
 RUN \
     # add user and configure it
-    useradd -u 10001 -G wheel,root -d /home/user --shell /bin/bash -m user && \
+    useradd -u 1234 -G wheel,root -d /home/user --shell /bin/bash -m user && \
     # Setup $PS1 for a consistent and reasonable prompt
     touch /etc/profile.d/udi_prompt.sh && \
-    chown 10001 /etc/profile.d/udi_prompt.sh && \
+    chown 1234 /etc/profile.d/udi_prompt.sh && \
     echo "export PS1='\W \`git branch --show-current 2>/dev/null | sed -r -e \"s@^(.+)@\(\1\) @\"\`$ '" >> /etc/profile.d/udi_prompt.sh && \
     # Copy the global git configuration to user config as global /etc/gitconfig
     # file may be overwritten by a mounted file at runtime
     cp /etc/gitconfig ${HOME}/.gitconfig && \
-    chown 10001 ${HOME}/ ${HOME}/.viminfo ${HOME}/.gitconfig ${HOME}/.stow-local-ignore && \
+    chown 1234 ${HOME}/ ${HOME}/.viminfo ${HOME}/.gitconfig ${HOME}/.stow-local-ignore && \
     # Set permissions on /etc/passwd and /home to allow arbitrary users to write
     chgrp -R 0 /home && \
     chmod -R g=u /etc/passwd /etc/group /home && \
@@ -115,7 +115,7 @@ RUN \
     # Bash-related files are backed up to /home/tooling/ incase they are deleted when persistUserHome is enabled.
     cp /home/user/.bashrc /home/tooling/.bashrc && \
     cp /home/user/.bash_profile /home/tooling/.bash_profile && \
-    chown 10001 /home/tooling/.bashrc /home/tooling/.bash_profile
+    chown 1234 /home/tooling/.bashrc /home/tooling/.bash_profile
 
 # Python
 #RUN dnf -y install python3.11 python3.11-devel python3.11-setuptools python3.11-pip nss_wrapper
@@ -161,7 +161,7 @@ ENV PATH "$PATH:$CONDA_DIR/bin"
 # Ajust permissions
 #RUN chgrp -Rf root /home/user && chmod -Rf g+w /home/user
 
-USER 10001
+USER 1234
 ENV HOME=/home/user
 
 # Miniconda
@@ -177,6 +177,11 @@ RUN $CONDA_DIR/bin/conda env create -y -f "/tmp/environment.yml" \
     && find $CONDA_DIR/ -follow -type f -name '*.a' -delete \
     && find $CONDA_DIR/ -follow -type f -name '*.js.map' -delete \
     && $CONDA_DIR/bin/conda clean -afy
+
+# Install maap-py library
+RUN mkdir /maap-py \
+    && git clone --single-branch --branch v3.1.4 https://github.com/MAAP-Project/maap-py.git /maap-py/ \
+    && pip install -e /maap-py/
 
 # use conda env
 #SHELL ["conda", "run", "-n", "pymaap", "/bin/bash", "-c"]
